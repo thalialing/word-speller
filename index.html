@@ -12040,7 +12040,7 @@ function renderQuestion() {
     input.focus();
     input.addEventListener('keydown', e => { if (e.key === 'Enter') checkAnswer(); });
     // 自动发音
-    setTimeout(() => speakWord(), 300);
+    setTimeout(() => speakWord(), 100);
   } else if (state.mode === 'dictation') {
     // 听写模式：显示词性和释义作为提示，听发音写单词
     display.innerHTML = `<div class="word-meaning">${word.zh}</div>
@@ -12052,7 +12052,7 @@ function renderQuestion() {
     input.focus();
     input.addEventListener('keydown', e => { if (e.key === 'Enter') checkAnswer(); });
     // 自动播放发音
-    setTimeout(() => speakWord(), 300);
+    setTimeout(() => speakWord(), 100);
   } else if (state.mode === '默写') {
     // 看英文选中文
     display.innerHTML = `<div class="word-en">${word.en}</div><div class="word-hint">选择正确的中文释义</div>`;
@@ -12067,7 +12067,7 @@ function renderQuestion() {
       optionsArea.appendChild(btn);
     });
     // 自动发音
-    setTimeout(() => speakWord(), 300);
+    setTimeout(() => speakWord(), 100);
   } else if (state.mode === 'choice') {
     // 选择题：看中文选英文
     display.innerHTML = `<div class="word-meaning">${word.zh}</div><div class="word-hint">选择正确的英文单词</div>`;
@@ -12082,7 +12082,7 @@ function renderQuestion() {
       optionsArea.appendChild(btn);
     });
     // 自动发音
-    setTimeout(() => speakWord(), 300);
+    setTimeout(() => speakWord(), 100);
   }
 }
 
@@ -12099,22 +12099,20 @@ function speakWord() {
   if ('speechSynthesis' in window) {
     const utter = new SpeechSynthesisUtterance(word.en);
     utter.lang = 'en-US';
-    utter.rate = 0.85;
+    utter.rate = 0.9;
     utter.pitch = 1;
     utter.volume = 1;
-    // 选择美音 voice
-    let voices = speechSynthesis.getVoices();
-    if (voices.length === 0) {
-      // voices 还没加载，等待一下
-      setTimeout(() => speakWord(), 100);
-      return;
-    }
-    const usVoice = voices.find(v => v.lang === 'en-US' && v.localService) || 
-                    voices.find(v => v.lang === 'en-US') ||
-                    voices.find(v => v.lang.startsWith('en'));
-    if (usVoice) utter.voice = usVoice;
+    // 直接播放，不等待 voices 加载
     speechSynthesis.cancel();
     speechSynthesis.speak(utter);
+    // 异步设置 voice（不阻塞播放）
+    setTimeout(() => {
+      const voices = speechSynthesis.getVoices();
+      const usVoice = voices.find(v => v.lang === 'en-US') || voices.find(v => v.lang.startsWith('en'));
+      if (usVoice) {
+        utter.voice = usVoice;
+      }
+    }, 0);
   } else {
     showToast('当前浏览器不支持语音播放');
   }
