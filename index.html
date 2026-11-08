@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WordSpeller - 单词拼写复习</title>
+<style>
+:root {
+  --primary: #4f46e5;
+  --primary-light: #818cf8;
+  --primary-dark: #3730a3;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --text: #1e293b;
+  --text-secondary: #64748b;
+  --border: #e2e8f0;
+  --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
+  --radius: 12px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+.container {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 20px 16px;
+}
+/* Header */
+.header {
+  text-align: center;
+  padding: 24px 0 16px;
+}
+.header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+.header p {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+/* View switching */
+.view { display: none; }
+.view.active { display: block; }
+/* Cards */
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+}
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+/* Level grid */
+.level-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+.level-btn {
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.level-btn:hover { border-color: var(--primary-light); }
+.level-btn.selected {
+  border-color: var(--primary);
+  background: #eef2ff;
+  color: var(--primary);
+}
+.level-btn .count {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+/* Mode grid */
+.mode-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+.mode-btn {
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.mode-btn:hover { border-color: var(--primary-light); }
+.mode-btn.selected {
+  border-color: var(--primary);
+  background: #eef2ff;
+}
+.mode-btn .icon { font-size: 24px; margin-bottom: 8px; }
+.mode-btn .label { font-size: 14px; font-weight: 600; }
+.mode-btn .desc { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-secondary {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { background: #e2e8f0; }
+.btn-success { background: var(--success); color: white; }
+.btn-danger { background: var(--danger); color: white; }
+.btn-block { width: 100%; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+/* Quiz area */
+.quiz-progress {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.progress-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  margin: 0 12px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+.word-display {
+  text-align: center;
+  padding: 24px 16px;
+  margin-bottom: 16px;
+}
+.word-meaning {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.word-hint {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.word-en {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 1px;
+}
+.input-area {
+  margin-bottom: 16px;
+}
+.word-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  font-size: 18px;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s;
+  text-transform: lowercase;
+}
+.word-input:focus { border-color: var(--primary); }
+.word-input.correct { border-color: var(--success); background: #ecfdf5; }
+.word-input.wrong { border-color: var(--danger); background: #fef2f2; }
+/* Options */
+.options-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+.option-btn {
+  padding: 14px 16px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  font-size: 15px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+}
+.option-btn:hover { border-color: var(--primary-light); }
+.option-btn.correct { border-color: var(--success); background: #ecfdf5; }
+.option-btn.wrong { border-color: var(--danger); background: #fef2f2; }
+.option-btn:disabled { cursor: default; }
+/* Feedback */
+.feedback {
+  text-align: center;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  font-weight: 500;
+  display: none;
+}
+.feedback.show { display: block; }
+.feedback.correct { background: #ecfdf5; color: var(--success); }
+.feedback.wrong { background: #fef2f2; color: var(--danger); }
+.feedback .answer { font-weight: 700; }
+/* Stats */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.stat-item {
+  text-align: center;
+  padding: 12px;
+  background: var(--bg);
+  border-radius: 8px;
+}
+.stat-num {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--primary);
+}
+.stat-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+/* Nav */
+.nav-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+}
+.nav-tab {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  background: var(--card);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.nav-tab.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+/* Word list */
+.word-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+.word-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.word-item:last-child { border-bottom: none; }
+.word-item .en { font-weight: 600; font-size: 15px; }
+.word-item .zh { font-size: 13px; color: var(--text-secondary); }
+.word-item .del-btn {
+  background: none;
+  border: none;
+  color: var(--danger);
+  cursor: pointer;
+  font-size: 18px;
+  padding: 4px 8px;
+}
+/* Speaker button */
+.speaker-btn {
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  padding: 8px;
+  vertical-align: middle;
+}
+/* Result screen */
+.result-screen {
+  text-align: center;
+  padding: 32px 16px;
+}
+.result-score {
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 16px 0;
+}
+.result-detail {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+/* Bottom nav */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 0;
+  padding-bottom: calc(8px + env(safe-area-inset-bottom));
+  z-index: 100;
+}
+.bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 16px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 11px;
+  gap: 2px;
+}
+.bottom-nav-item.active { color: var(--primary); }
+.bottom-nav-item .nav-icon { font-size: 20px; }
+body { padding-bottom: 70px; }
+/* Toast */
+.toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.toast.show { opacity: 1; }
+@media (min-width: 768px) {
+  .level-grid { grid-template-columns: repeat(3, 1fr); }
+  .mode-grid { grid-template-columns: repeat(4, 1fr); }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- ===== 首页视图 ===== -->
+  <div id="view-home" class="view active">
+    <div class="header">
+      <h1>WordSpeller</h1>
+      <p>四级 / 六级 / 专四 / 专八 / 雅思 单词拼写复习</p>
+    </div>
+    <div class="card">
+      <div class="card-title">1. 选择题库</div>
+      <div class="level-grid" id="levelGrid"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">2. 选择模式</div>
+      <div class="mode-grid" id="modeGrid"></div>
+    </div>
+    <button class="btn btn-primary btn-block" id="startBtn" disabled>开始练习</button>
+  </div>
+
+  <!-- ===== 练习视图 ===== -->
+  <div id="view-quiz" class="view">
+    <div class="card">
+      <div class="quiz-progress">
+        <span id="progressText">1 / 10</span>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 10%"></div></div>
+        <span id="scoreText">0 分</span>
+      </div>
+      <div class="word-display" id="quizDisplay"></div>
+      <div class="input-area" id="quizInputArea"></div>
+      <div class="options-grid" id="quizOptions"></div>
+      <div class="feedback" id="quizFeedback"></div>
+      <button class="btn btn-primary btn-block" id="nextBtn" style="display:none">下一题</button>
+    </div>
+  </div>
+
+  <!-- ===== 结果视图 ===== -->
+  <div id="view-result" class="view">
+    <div class="card result-screen">
+      <div style="font-size:48px">🎉</div>
+      <h2 style="margin:16px 0 8px">练习完成！</h2>
+      <div class="result-score" id="resultScore">0 / 10</div>
+      <div class="result-detail" id="resultDetail"></div>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="restartQuiz()">再来一轮</button>
+        <button class="btn btn-secondary" onclick="goHome()">返回首页</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 错词本视图 ===== -->
+  <div id="view-mistakes" class="view">
+    <div class="header">
+      <h1>错词本</h1>
+      <p id="mistakeCount">0 个错词</p>
+    </div>
+    <div class="card">
+      <div class="word-list" id="mistakeList">
+        <div style="text-align:center;color:var(--text-secondary);padding:40px 0;font-size:14px">暂无错词，继续保持！</div>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-block" id="practiceMistakesBtn">练习错词本</button>
+  </div>
+
+  <!-- ===== 统计视图 ===== -->
+  <div id="view-stats" class="view">
+    <div class="header">
+      <h1>学习统计</h1>
+    </div>
+    <div class="card">
+      <div class="stats-row">
+        <div class="stat-item">
+          <div class="stat-num" id="statTotal">0</div>
+          <div class="stat-label">总练习数</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" id="statCorrect">0</div>
+          <div class="stat-label">正确数</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" id="statRate">0%</div>
+          <div class="stat-label">正确率</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">各题库掌握情况</div>
+      <div id="levelStats"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom nav -->
+<div class="bottom-nav">
+  <div class="bottom-nav-item active" data-view="home" onclick="switchTab('home')">
+    <span class="nav-icon">🏠</span><span>首页</span>
+  </div>
+  <div class="bottom-nav-item" data-view="mistakes" onclick="switchTab('mistakes')">
+    <span class="nav-icon">📝</span><span>错词本</span>
+  </div>
+  <div class="bottom-nav-item" data-view="stats" onclick="switchTab('stats')">
+    <span class="nav-icon">📊</span><span>统计</span>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== 词库数据 =====
+const WORD_BANKS = {
+  cet4: {
+    name: '四级 CET-4',
+    words: [
+      {en:'abandon',zh:'v. 放弃，抛弃'},{en:'ability',zh:'n. 能力，才能'},{en:'absorb',zh:'v. 吸收，吸引'},{en:'abstract',zh:'adj. 抽象的 n. 摘要'},
+      {en:'academic',zh:'adj. 学术的，学院的'},{en:'accept',zh:'v. 接受，同意'},{en:'access',zh:'n. 通道，入口 v. 访问'},{en:'accident',zh:'n. 事故，意外'},
+      {en:'accompany',zh:'v. 陪伴，伴随'},{en:'accomplish',zh:'v. 完成，实现'},{en:'account',zh:'n. 账户，解释 v. 说明'},{en:'accurate',zh:'adj. 准确的，精确的'},
+      {en:'achieve',zh:'v. 达到，实现'},{en:'acquire',zh:'v. 获得，学到'},{en:'adapt',zh:'v. 适应，改编'},{en:'addition',zh:'n. 增加，加法'},
+      {en:'adequate',zh:'adj. 足够的，适当的'},{en:'adjust',zh:'v. 调整，适应'},{en:'administration',zh:'n. 管理，行政'},{en:'admire',zh:'v. 钦佩，赞赏'},
+      {en:'admit',zh:'v. 承认，准许进入'},{en:'adopt',zh:'v. 采用，收养'},{en:'adult',zh:'n. 成年人 adj. 成年的'},{en:'advance',zh:'v./n. 前进，进展'},
+      {en:'advantage',zh:'n. 优势，好处'},{en:'adventure',zh:'n. 冒险，奇遇'},{en:'advertise',zh:'v. 做广告，宣传'},{en:'advice',zh:'n. 建议，忠告'},
+      {en:'affair',zh:'n. 事务，事件'},{en:'affect',zh:'v. 影响，感动'},{en:'afford',zh:'v. 负担得起，提供'},{en:'agreement',zh:'n. 协议，同意'},
+      {en:'aim',zh:'n. 目标 v. 瞄准'},{en:'alarm',zh:'n. 警报，闹钟 v. 使惊慌'},{en:'allocate',zh:'v. 分配，分派'},{en:'along',zh:'prep. 沿着 adv. 向前'},
+      {en:'alter',zh:'v. 改变，更改'},{en:'alternative',zh:'n. 替代品 adj. 可供选择的'},{en:'amaze',zh:'v. 使惊讶'},{en:'ambition',zh:'n. 雄心，抱负'},
+      {en:'amount',zh:'n. 数量，总额'},{en:'analyze',zh:'v. 分析，解析'},{en:'ancient',zh:'adj. 古代的，古老的'},{en:'announce',zh:'v. 宣布，通告'},
+      {en:'annual',zh:'adj. 每年的，年度的'},{en:'anxiety',zh:'n. 焦虑，忧虑'},{en:'apart',zh:'adv. 分开，相隔'},{en:'apparent',zh:'adj. 明显的，表面上的'},
+      {en:'appeal',zh:'v./n. 呼吁，吸引力'},{en:'appear',zh:'v. 出现，显得'},{en:'apply',zh:'v. 申请，应用'},{en:'appoint',zh:'v. 任命，约定'},
+      {en:'appreciate',zh:'v. 欣赏，感激'},{en:'approach',zh:'v. 接近 n. 方法'},{en:'appropriate',zh:'adj. 适当的，合适的'},{en:'approve',zh:'v. 批准，赞成'},
+      {en:'argue',zh:'v. 争论，主张'},{en:'arise',zh:'v. 出现，升起'},{en:'arrange',zh:'v. 安排，整理'},{en:'arrest',zh:'v./n. 逮捕，拘留'},
+      {en:'artificial',zh:'adj. 人工的，人造的'},{en:'ashamed',zh:'adj. 羞愧的，惭愧的'},{en:'aspect',zh:'n. 方面，外观'},{en:'assess',zh:'v. 评估，估价'},
+      {en:'assign',zh:'v. 分配，指派'},{en:'assist',zh:'v. 协助，帮助'},{en:'associate',zh:'v. 联系，交往 n. 同事'},{en:'assume',zh:'v. 假设，承担'},
+      {en:'assure',zh:'v. 保证，使确信'},{en:'atmosphere',zh:'n. 大气，气氛'},{en:'attach',zh:'v. 附上，使依附'},{en:'attain',zh:'v. 达到，获得'},
+      {en:'attempt',zh:'v./n. 尝试，企图'},{en:'attend',zh:'v. 出席，照料'},{en:'attract',zh:'v. 吸引，引起'},{en:'authority',zh:'n. 权威，当局'},
+      {en:'available',zh:'adj. 可获得的，有空的'},{en:'average',zh:'adj. 平均的 n. 平均数'},{en:'avoid',zh:'v. 避免，避开'},{en:'award',zh:'n. 奖品 v. 授予'},
+      {en:'aware',zh:'adj. 意识到的，知道的'},{en:'background',zh:'n. 背景，经历'},{en:'balance',zh:'n. 平衡 v. 使平衡'},{en:'barrier',zh:'n. 障碍，屏障'},
+      {en:'basis',zh:'n. 基础，根据'},{en:'behavior',zh:'n. 行为，举止'},{en:'belief',zh:'n. 信念，信任'},{en:'benefit',zh:'n. 益处 v. 有益于'},
+      {en:'beyond',zh:'prep. 超出，在...那边'},{en:'budget',zh:'n. 预算'},{en:'burden',zh:'n. 负担，重担'},{en:'calculate',zh:'v. 计算，估算'},
+      {en:'campaign',zh:'n. 运动，战役'},{en:'cancel',zh:'v. 取消，撤销'},{en:'capable',zh:'adj. 有能力的，能干的'},{en:'capacity',zh:'n. 容量，能力'},
+      {en:'career',zh:'n. 职业，生涯'},{en:'casual',zh:'adj. 随意的，偶然的'},{en:'challenge',zh:'n./v. 挑战'},{en:'character',zh:'n. 性格，角色，字符'},
+      {en:'charge',zh:'v. 收费，指控 n. 费用'},{en:'circumstance',zh:'n. 环境，情况'},{en:'cite',zh:'v. 引用，引证'},{en:'civil',zh:'adj. 公民的，民事的'}
+    ]
+  },
+  cet6: {
+    name: '六级 CET-6',
+    words: [
+      {en:'abolish',zh:'v. 废除，取消'},{en:'abundant',zh:'adj. 丰富的，充裕的'},{en:'accelerate',zh:'v. 加速，促进'},{en:'accessible',zh:'adj. 可接近的，可使用的'},
+      {en:'accommodate',zh:'v. 容纳，提供住宿'},{en:'accumulate',zh:'v. 积累，积聚'},{en:'accuse',zh:'v. 指控，指责'},{en:'acknowledge',zh:'v. 承认，致谢'},
+      {en:'acquire',zh:'v. 获得，习得'},{en:'adapt',zh:'v. 适应，改编'},{en:'adequate',zh:'adj. 充足的，适当的'},{en:'adjacent',zh:'adj. 邻近的，毗邻的'},
+      {en:'administration',zh:'n. 管理，行政部门'},{en:'advocate',zh:'v. 提倡 n. 拥护者'},{en:'aggregate',zh:'n. 总数 adj. 合计的'},{en:'aggressive',zh:'adj. 侵略性的，有进取心的'},
+      {en:'alleviate',zh:'v. 减轻，缓和'},{en:'allocate',zh:'v. 分配，分派'},{en:'ambiguous',zh:'adj. 模糊的，歧义的'},{en:'ambitious',zh:'adj. 有雄心的，野心勃勃的'},
+      {en:'amend',zh:'v. 修改，修正'},{en:'analogy',zh:'n. 类比，相似'},{en:'anonymous',zh:'adj. 匿名的'},{en:'apparatus',zh:'n. 装置，设备'},
+      {en:'articulate',zh:'v. 清楚表达 adj. 表达清晰的'},{en:'aspire',zh:'v. 渴望，追求'},{en:'assemble',zh:'v. 集合，组装'},{en:'assert',zh:'v. 断言，主张'},
+      {en:'assess',zh:'v. 评估，估价'},{en:'asset',zh:'n. 资产，优点'},{en:'attain',zh:'v. 达到，获得'},{en:'attribute',zh:'v. 归因于 n. 属性'},
+      {en:'authentic',zh:'adj. 真实的，可靠的'},{en:'autonomy',zh:'n. 自治，自主权'},{en:'avarice',zh:'n. 贪婪'},{en:'barren',zh:'adj. 贫瘠的，不育的'},
+      {en:'bewilder',zh:'v. 使迷惑，使不知所措'},{en:'boycott',zh:'v./n. 抵制，拒绝参与'},{en:'bizarre',zh:'adj. 奇异的，古怪的'},{en:'brilliant',zh:'adj. 杰出的，灿烂的'},
+      {en:'cater',zh:'v. 迎合，提供饮食'},{en:'caution',zh:'n. 谨慎，警告'},{en:'coincide',zh:'v. 同时发生，一致'},{en:'collaborate',zh:'v. 合作，协作'},
+      {en:'commence',zh:'v. 开始，着手'},{en:'compatible',zh:'adj. 兼容的，相容的'},{en:'compel',zh:'v. 强迫，迫使'},{en:'compensate',zh:'v. 补偿，赔偿'},
+      {en:'compile',zh:'v. 编辑，汇编'},{en:'complement',zh:'v./n. 补充，补足'},{en:'comply',zh:'v. 遵守，顺从'},{en:'comprehensive',zh:'adj. 全面的，综合的'},
+      {en:'comprise',zh:'v. 包含，由...组成'},{en:'compromise',zh:'n./v. 妥协，折中'},{en:'conceive',zh:'v. 构想，怀孕'},{en:'concession',zh:'n. 让步，妥协'},
+      {en:'confident',zh:'adj. 自信的，确信的'},{en:'conform',zh:'v. 遵守，符合'},{en:'confront',zh:'v. 面对，对抗'},{en:'consensus',zh:'n. 共识，一致意见'},
+      {en:'conserve',zh:'v. 保护，保存'},{en:'considerable',zh:'adj. 相当大的，重要的'},{en:'consistent',zh:'adj. 一致的，始终如一的'},{en:'conspicuous',zh:'adj. 显眼的，明显的'},
+      {en:'constitute',zh:'v. 构成，组成'},{en:'constrain',zh:'v. 限制，约束'},{en:'contemplate',zh:'v. 沉思，仔细考虑'},{en:'contemporary',zh:'adj. 当代的 n. 同代人'},
+      {en:'contradict',zh:'v. 反驳，与...矛盾'},{en:'convey',zh:'v. 传达，运输'},{en:'coordinate',zh:'v. 协调 adj. 并列的'},{en:'correspond',zh:'v. 符合，通信'},
+      {en:'crucial',zh:'adj. 至关重要的'},{en:'curb',zh:'v./n. 抑制，控制'},{en:'dazzle',zh:'v. 使眼花，使赞叹'},{en:'deduce',zh:'v. 推论，演绎'},
+      {en:'deem',zh:'v. 认为，视为'},{en:'deficit',zh:'n. 赤字，亏损'},{en:'defy',zh:'v. 违抗，公然反抗'},{en:'degenerate',zh:'v. 退化，堕落'},
+      {en:'deliberate',zh:'adj. 故意的，深思熟虑的'},{en:'depress',zh:'v. 使沮丧，压低'},{en:'deprive',zh:'v. 剥夺，使丧失'},{en:'descend',zh:'v. 下降，下来'},
+      {en:'designate',zh:'v. 指定，指派'},{en:'detect',zh:'v. 发现，察觉'},{en:'deteriorate',zh:'v. 恶化，变坏'},{en:'devote',zh:'v. 致力于，奉献'},
+      {en:'differentiate',zh:'v. 区分，区别'},{en:'dilemma',zh:'n. 困境，进退两难'},{en:'diminish',zh:'v. 减少，缩小'},{en:'disclose',zh:'v. 揭露，透露'},
+      {en:'discern',zh:'v. 辨别，识别'},{en:'dispatch',zh:'v. 派遣，发送'},{en:'disperse',zh:'v. 分散，散开'},{en:'distort',zh:'v. 歪曲，扭曲'},
+      {en:'divert',zh:'v. 转移，转向'},{en:'dominate',zh:'v. 支配，统治'},{en:'drastic',zh:'adj. 激烈的，极端的'},{en:'duration',zh:'n. 持续时间，期间'}
+    ]
+  },
+  tem4: {
+    name: '专四 TEM-4',
+    words: [
+      {en:'abdomen',zh:'n. 腹部'},{en:'abnormal',zh:'adj. 异常的，不正常的'},{en:'abolish',zh:'v. 废除，取消'},{en:'abundant',zh:'adj. 丰富的，充裕的'},
+      {en:'accessory',zh:'n. 附件，配件'},{en:'accidental',zh:'adj. 意外的，偶然的'},{en:'accommodation',zh:'n. 住宿，膳宿'},{en:'accordance',zh:'n. 一致，符合'},
+      {en:'accumulate',zh:'v. 积累，积聚'},{en:'accustomed',zh:'adj. 习惯的，适应的'},{en:'acquaintance',zh:'n. 熟人，相识'},{en:'activate',zh:'v. 激活，启动'},
+      {en:'acute',zh:'adj. 急性的，敏锐的'},{en:'adaptation',zh:'n. 适应，改编'},{en:'addict',zh:'n. 瘾君子 v. 使上瘾'},{en:'adequately',zh:'adv. 充分地，适当地'},
+      {en:'adjacent',zh:'adj. 邻近的，毗邻的'},{en:'adjoin',zh:'v. 毗邻，靠近'},{en:'administer',zh:'v. 管理，执行'},{en:'adolescent',zh:'n. 青少年 adj. 青春期的'},
+      {en:'advent',zh:'n. 出现，到来'},{en:'adverse',zh:'adj. 不利的，有害的'},{en:'aesthetic',zh:'adj. 美学的，审美的'},{en:'affiliate',zh:'v. 使附属 n. 分支'},
+      {en:'agony',zh:'n. 极度痛苦'},{en:'alert',zh:'adj. 警觉的 n. 警报'},{en:'algebra',zh:'n. 代数'},{en:'alien',zh:'adj. 外来的 n. 外星人'},
+      {en:'alliance',zh:'n. 联盟，同盟'},{en:'alongside',zh:'prep. 在...旁边'},{en:'alternate',zh:'v. 交替 adj. 轮流的'},{en:'ambassador',zh:'n. 大使'},
+      {en:'ambiguous',zh:'adj. 模糊的，歧义的'},{en:'amend',zh:'v. 修改，修正'},{en:'ample',zh:'adj. 充足的，丰富的'},{en:'analogous',zh:'adj. 类似的，相似的'},
+      {en:'analytical',zh:'adj. 分析的，解析的'},{en:'angel',zh:'n. 天使'},{en:'anticipate',zh:'v. 预期，期望'},{en:'apparatus',zh:'n. 装置，设备'},
+      {en:'appendix',zh:'n. 附录，阑尾'},{en:'applaud',zh:'v. 鼓掌，称赞'},{en:'appraisal',zh:'n. 评价，估价'},{en:'articulate',zh:'v. 清楚表达'},
+      {en:'aspiration',zh:'n. 渴望，抱负'},{en:'assassinate',zh:'v. 暗杀，行刺'},{en:'assault',zh:'n./v. 攻击，袭击'},{en:'assert',zh:'v. 断言，主张'},
+      {en:'assimilate',zh:'v. 吸收，同化'},{en:'assumption',zh:'n. 假设，承担'},{en:'assurance',zh:'n. 保证，信心'},{en:'astronomy',zh:'n. 天文学'},
+      {en:'attractive',zh:'adj. 有吸引力的'},{en:'auction',zh:'n./v. 拍卖'},{en:'authentic',zh:'adj. 真实的，可靠的'},{en:'authorize',zh:'v. 授权，批准'},
+      {en:'automatically',zh:'adv. 自动地'},{en:'avail',zh:'v. 有用 n. 效用'},{en:'awe',zh:'n. 敬畏 v. 使敬畏'},{en:'axis',zh:'n. 轴，轴线'},
+      {en:'bachelor',zh:'n. 学士，单身汉'},{en:'bacteria',zh:'n. 细菌'},{en:'barren',zh:'adj. 贫瘠的，不育的'},{en:'bewilder',zh:'v. 使迷惑'},
+      {en:'bias',zh:'n. 偏见，偏心'},{en:'bibliography',zh:'n. 参考书目'},{en:'bizarre',zh:'adj. 奇异的，古怪的'},{en:'blank',zh:'adj. 空白的 n. 空白'},
+      {en:'blaze',zh:'n. 火焰 v. 燃烧'},{en:'bleak',zh:'adj. 荒凉的，黯淡的'},{en:'blossom',zh:'n. 花 v. 开花'},{en:'blunder',zh:'n. 大错 v. 犯大错'},
+      {en:'bold',zh:'adj. 大胆的，粗体的'},{en:'boost',zh:'v./n. 促进，提升'},{en:'boring',zh:'adj. 无聊的'},{en:'breakthrough',zh:'n. 突破，重大进展'},
+      {en:'bribe',zh:'n./v. 贿赂'},{en:'brisk',zh:'adj. 轻快的，活跃的'},{en:'brutal',zh:'adj. 残忍的，野蛮的'},{en:'bubble',zh:'n. 气泡 v. 冒泡'},
+      {en:'budget',zh:'n. 预算'},{en:'bulk',zh:'n. 大块，大量'},{en:'bulletin',zh:'n. 公告，简报'},{en:'bureaucracy',zh:'n. 官僚机构'},
+      {en:'cadre',zh:'n. 干部，骨干'},{en:'calculate',zh:'v. 计算，估算'},{en:'calorie',zh:'n. 卡路里'},{en:'cancel',zh:'v. 取消，撤销'},
+      {en:'candidate',zh:'n. 候选人，申请者'},{en:'capability',zh:'n. 能力，才能'},{en:'captive',zh:'adj. 被俘虏的 n. 俘虏'},{en:'cardinal',zh:'adj. 主要的，基本的'},
+      {en:'cargo',zh:'n. 货物'},{en:'carrier',zh:'n. 承运人，载体'},{en:'casualty',zh:'n. 伤亡人员'},{en:'catalog',zh:'n. 目录 v. 编目录'},
+      {en:'catastrophe',zh:'n. 大灾难'},{en:'cautious',zh:'adj. 谨慎的，小心的'},{en:'cease',zh:'v. 停止，终止'},{en:'celebrity',zh:'n. 名人，名声'},
+      {en:'cereal',zh:'n. 谷物，谷类食物'},{en:'certify',zh:'v. 证明，证实'},{en:'cherish',zh:'v. 珍惜，珍爱'},{en:'chronicle',zh:'n. 编年史 v. 记载'}
+    ]
+  },
+  tem8: {
+    name: '专八 TEM-8',
+    words: [
+      {en:'aberration',zh:'n. 偏离，失常'},{en:'abhor',zh:'v. 憎恶，痛恨'},{en:'abnegation',zh:'n. 放弃，克制'},{en:'aboriginal',zh:'adj. 土著的 n. 土著居民'},
+      {en:'abrasive',zh:'adj. 研磨性的，粗鲁的'},{en:'abrogate',zh:'v. 废除，取消'},{en:'absurd',zh:'adj. 荒谬的，可笑的'},{en:'abundant',zh:'adj. 丰富的，充裕的'},
+      {en:'acceleration',zh:'n. 加速，促进'},{en:'accessible',zh:'adj. 可接近的，易理解的'},{en:'acclaim',zh:'v./n. 称赞，喝彩'},{en:'acclimate',zh:'v. 使适应，使服水土'},
+      {en:'accolade',zh:'n. 嘉奖，荣誉'},{en:'accomplice',zh:'n. 同谋，共犯'},{en:'accord',zh:'n. 一致 v. 给予'},{en:'accountable',zh:'adj. 有责任的，应负责的'},
+      {en:'accretion',zh:'n. 增长，堆积物'},{en:'acrimonious',zh:'adj. 尖刻的，刻薄的'},{en:'acrophobia',zh:'n. 恐高症'},{en:'actuate',zh:'v. 开动，促使'},
+      {en:'acumen',zh:'n. 敏锐，聪明'},{en:'adamant',zh:'adj. 坚硬的，固执的'},{en:'adaptable',zh:'adj. 可适应的'},{en:'addition',zh:'n. 增加，附加物'},
+      {en:'adept',zh:'adj. 熟练的，擅长的'},{en:'adhere',zh:'v. 粘附，坚持'},{en:'adjunct',zh:'n. 附属物， adjunct'},{en:'admonish',zh:'v. 告诫，劝告'},
+      {en:'adroit',zh:'adj. 灵巧的，机敏的'},{en:'adulation',zh:'n. 谄媚，奉承'},{en:'adventitious',zh:'adj. 偶然的，外来的'},{en:'aegis',zh:'n. 保护，庇护'},
+      {en:'aesthetic',zh:'adj. 美学的，审美的'},{en:'affable',zh:'adj. 和蔼可亲的'},{en:'affinity',zh:'n. 密切关系，吸引力'},{en:'affluent',zh:'adj. 富裕的，丰富的'},
+      {en:'aggrandize',zh:'v. 扩大，增加'},{en:'aggravate',zh:'v. 加重，使恶化'},{en:'agile',zh:'adj. 敏捷的，灵活的'},{en:'agitate',zh:'v. 鼓动，使不安'},
+      {en:'alacrity',zh:'n. 敏捷，乐意'},{en:'alchemy',zh:'n. 炼金术'},{en:'alias',zh:'n. 别名，化名'},{en:'alibi',zh:'n. 不在场证明，借口'},
+      {en:'alienate',zh:'v. 使疏远，离间'},{en:'alleviate',zh:'v. 减轻，缓和'},{en:'allocate',zh:'v. 分配，分派'},{en:'allure',zh:'n. 诱惑 v. 吸引'},
+      {en:'aloof',zh:'adj. 冷漠的，疏远的'},{en:'altitude',zh:'n. 高度，海拔'},{en:'altruistic',zh:'adj. 利他的，无私的'},{en:'amalgamate',zh:'v. 合并，混合'},
+      {en:'amass',zh:'v. 积聚，收集'},{en:'ambivalence',zh:'n. 矛盾情绪'},{en:'ameliorate',zh:'v. 改善，改良'},{en:'amenable',zh:'adj. 顺从的，有责任的'},
+      {en:'amend',zh:'v. 修改，修正'},{en:'amnesia',zh:'n. 失忆症'},{en:'amnesty',zh:'n. 大赦，赦免'},{en:'amoral',zh:'adj. 非道德的，超道德的'},
+      {en:'amorphous',zh:'adj. 无定形的，模糊的'},{en:'amphibian',zh:'n. 两栖动物'},{en:'amplify',zh:'v. 放大，详述'},{en:'analogous',zh:'adj. 类似的'},
+      {en:'anarchy',zh:'n. 无政府状态，混乱'},{en:'anatomy',zh:'n. 解剖学，结构'},{en:'ancestry',zh:'n. 祖先，家世'},{en:'anecdote',zh:'n. 轶事，奇闻'},
+      {en:'angular',zh:'adj. 有角的，瘦削的'},{en:'annex',zh:'v. 附加，吞并'},{en:'annihilate',zh:'v. 消灭，歼灭'},{en:'annotate',zh:'v. 注释，评注'},
+      {en:'annul',zh:'v. 废除，取消'},{en:'anomalous',zh:'adj. 异常的，反常的'},{en:'antagonism',zh:'n. 对抗，敌对'},{en:'antecedent',zh:'n. 前事 adj. 在前的'},
+      {en:'anthology',zh:'n. 选集，文选'},{en:'antic',zh:'n. 滑稽动作 adj. 古怪的'},{en:'antipathy',zh:'n. 反感，厌恶'},{en:'antiquated',zh:'adj. 过时的，陈旧的'},
+      {en:'apathy',zh:'n. 冷漠，无兴趣'},{en:'apex',zh:'n. 顶点，最高点'},{en:'aphorism',zh:'n. 格言，警句'},{en:'apiary',zh:'n. 养蜂场'},
+      {en:'aplomb',zh:'n. 沉着，自信'},{en:'apocryphal',zh:'adj. 虚构的，可疑的'},{en:'apogee',zh:'n. 远地点，顶点'},{en:'apologist',zh:'n. 辩护者，辩解者'}
+    ]
+  },
+  ielts: {
+    name: '雅思 IELTS',
+    words: [
+      {en:'abundant',zh:'adj. 丰富的，充裕的'},{en:'accelerate',zh:'v. 加速，促进'},{en:'accessible',zh:'adj. 可接近的，易使用的'},{en:'accommodate',zh:'v. 容纳，提供住宿'},
+      {en:'accompany',zh:'v. 陪伴，伴随'},{en:'accomplish',zh:'v. 完成，实现'},{en:'accurate',zh:'adj. 准确的，精确的'},{en:'acknowledge',zh:'v. 承认，致谢'},
+      {en:'acquire',zh:'v. 获得，学到'},{en:'adapt',zh:'v. 适应，改编'},{en:'adequate',zh:'adj. 足够的，适当的'},{en:'adjacent',zh:'adj. 邻近的，毗邻的'},
+      {en:'adjust',zh:'v. 调整，适应'},{en:'administer',zh:'v. 管理，执行'},{en:'advocate',zh:'v. 提倡 n. 拥护者'},{en:'aesthetic',zh:'adj. 美学的，审美的'},
+      {en:'aggregate',zh:'n. 总数 adj. 合计的'},{en:'aggressive',zh:'adj. 侵略性的，有进取心的'},{en:'alleviate',zh:'v. 减轻，缓和'},{en:'allocate',zh:'v. 分配，分派'},
+      {en:'alternative',zh:'n. 替代品 adj. 可供选择的'},{en:'ambiguous',zh:'adj. 模糊的，歧义的'},{en:'ambitious',zh:'adj. 有雄心的'},{en:'amend',zh:'v. 修改，修正'},
+      {en:'analogy',zh:'n. 类比，相似'},{en:'analyze',zh:'v. 分析，解析'},{en:'annual',zh:'adj. 每年的，年度的'},{en:'anonymous',zh:'adj. 匿名的'},
+      {en:'anticipate',zh:'v. 预期，期望'},{en:'apparent',zh:'adj. 明显的，表面上的'},{en:'appeal',zh:'v./n. 呼吁，吸引力'},{en:'appreciate',zh:'v. 欣赏，感激'},
+      {en:'approach',zh:'v. 接近 n. 方法'},{en:'appropriate',zh:'adj. 适当的'},{en:'approve',zh:'v. 批准，赞成'},{en:'articulate',zh:'v. 清楚表达'},
+      {en:'assemble',zh:'v. 集合，组装'},{en:'assess',zh:'v. 评估，估价'},{en:'asset',zh:'n. 资产，优点'},{en:'assume',zh:'v. 假设，承担'},
+      {en:'assure',zh:'v. 保证，使确信'},{en:'attach',zh:'v. 附上，使依附'},{en:'attain',zh:'v. 达到，获得'},{en:'attempt',zh:'v./n. 尝试，企图'},
+      {en:'attribute',zh:'v. 归因于 n. 属性'},{en:'authentic',zh:'adj. 真实的，可靠的'},{en:'authority',zh:'n. 权威，当局'},{en:'autonomy',zh:'n. 自治，自主权'},
+      {en:'available',zh:'adj. 可获得的，有空的'},{en:'barrier',zh:'n. 障碍，屏障'},{en:'basis',zh:'n. 基础，根据'},{en:'behavior',zh:'n. 行为，举止'},
+      {en:'benefit',zh:'n. 益处 v. 有益于'},{en:'bias',zh:'n. 偏见，偏心'},{en:'biodiversity',zh:'n. 生物多样性'},{en:'budget',zh:'n. 预算'},
+      {en:'burden',zh:'n. 负担，重担'},{en:'calculate',zh:'v. 计算，估算'},{en:'campaign',zh:'n. 运动，战役'},{en:'capacity',zh:'n. 容量，能力'},
+      {en:'career',zh:'n. 职业，生涯'},{en:'category',zh:'n. 类别，种类'},{en:'challenge',zh:'n./v. 挑战'},{en:'characteristic',zh:'n. 特征 adj. 典型的'},
+      {en:'circumstance',zh:'n. 环境，情况'},{en:'cite',zh:'v. 引用，引证'},{en:'civil',zh:'adj. 公民的，民事的'},{en:'coincide',zh:'v. 同时发生，一致'},
+      {en:'collaborate',zh:'v. 合作，协作'},{en:'commence',zh:'v. 开始，着手'},{en:'community',zh:'n. 社区，社群'},{en:'compatible',zh:'adj. 兼容的，相容的'},
+      {en:'compensate',zh:'v. 补偿，赔偿'},{en:'competent',zh:'adj. 胜任的，有能力的'},{en:'compile',zh:'v. 编辑，汇编'},{en:'complement',zh:'v./n. 补充，补足'},
+      {en:'complex',zh:'adj. 复杂的 n. 综合体'},{en:'component',zh:'n. 组成部分，元件'},{en:'comprehensive',zh:'adj. 全面的，综合的'},{en:'comprise',zh:'v. 包含，由...组成'},
+      {en:'compromise',zh:'n./v. 妥协，折中'},{en:'conceive',zh:'v. 构想，怀孕'},{en:'concentrate',zh:'v. 集中，专心'},{en:'concept',zh:'n. 概念，观念'},
+      {en:'conclude',zh:'v. 得出结论，结束'},{en:'concurrent',zh:'adj. 同时发生的，并发的'},{en:'conduct',zh:'v. 进行 n. 行为'},{en:'confer',zh:'v. 商谈，授予'},
+      {en:'confine',zh:'v. 限制，局限'},{en:'confirm',zh:'v. 确认，证实'},{en:'conflict',zh:'n./v. 冲突，矛盾'},{en:'conform',zh:'v. 遵守，符合'},
+      {en:'confront',zh:'v. 面对，对抗'},{en:'consequence',zh:'n. 结果，后果'},{en:'conservation',zh:'n. 保护，保存'},{en:'conservative',zh:'adj. 保守的 n. 保守派'},
+      {en:'considerable',zh:'adj. 相当大的，重要的'},{en:'consistent',zh:'adj. 一致的，始终如一的'},{en:'conspicuous',zh:'adj. 显眼的，明显的'},{en:'constitute',zh:'v. 构成，组成'}
+    ]
+  }
+};
+
+// ===== 模式定义 =====
+const MODES = {
+  spelling: { label: '拼写练习', icon: '✏️', desc: '看中文写英文' },
+  dictation: { label: '听写模式', icon: '🔊', desc: '听发音写英文' },
+ 默写: { label: '默写模式', icon: '📖', desc: '看英文选中文' },
+  choice: { label: '选择题', icon: '🎯', desc: '四选一选答案' }
+};
+
+// ===== 状态 =====
+let state = {
+  level: null,
+  mode: null,
+  words: [],
+  currentIndex: 0,
+  score: 0,
+  mistakes: [],
+  answered: false,
+  practiceMistakesOnly: false
+};
+
+// ===== 存储 =====
+const STORAGE_KEY = 'wordspeller_data';
+function loadData() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { mistakes: [], stats: { total: 0, correct: 0, byLevel: {} } };
+  } catch { return { mistakes: [], stats: { total: 0, correct: 0, byLevel: {} } }; }
+}
+function saveData(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+let appData = loadData();
+
+// ===== 初始化 =====
+function init() {
+  renderLevels();
+  renderModes();
+  updateStartBtn();
+}
+
+function renderLevels() {
+  const grid = document.getElementById('levelGrid');
+  grid.innerHTML = '';
+  for (const [key, bank] of Object.entries(WORD_BANKS)) {
+    const btn = document.createElement('div');
+    btn.className = 'level-btn' + (state.level === key ? ' selected' : '');
+    btn.innerHTML = `${bank.name}<span class="count">${bank.words.length} 词</span>`;
+    btn.onclick = () => {
+      state.level = key;
+      renderLevels();
+      updateStartBtn();
+    };
+    grid.appendChild(btn);
+  }
+}
+
+function renderModes() {
+  const grid = document.getElementById('modeGrid');
+  grid.innerHTML = '';
+  for (const [key, mode] of Object.entries(MODES)) {
+    const btn = document.createElement('div');
+    btn.className = 'mode-btn' + (state.mode === key ? ' selected' : '');
+    btn.innerHTML = `<div class="icon">${mode.icon}</div><div class="label">${mode.label}</div><div class="desc">${mode.desc}</div>`;
+    btn.onclick = () => {
+      state.mode = key;
+      renderModes();
+      updateStartBtn();
+    };
+    grid.appendChild(btn);
+  }
+}
+
+function updateStartBtn() {
+  document.getElementById('startBtn').disabled = !(state.level && state.mode);
+}
+
+// ===== 视图切换 =====
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  document.querySelectorAll('.bottom-nav-item').forEach(t => t.classList.remove('active'));
+  const navMap = { home: 'home', mistakes: 'mistakes', stats: 'stats' };
+  if (navMap[name]) {
+    document.querySelector(`.bottom-nav-item[data-view="${navMap[name]}"]`)?.classList.add('active');
+  }
+  window.scrollTo(0, 0);
+}
+
+function switchTab(view) {
+  if (view === 'mistakes') renderMistakes();
+  if (view === 'stats') renderStats();
+  showView(view);
+}
+
+function goHome() {
+  showView('home');
+}
+
+// ===== 开始练习 =====
+document.getElementById('startBtn').onclick = () => {
+  startQuiz(false);
+};
+
+function startQuiz(mistakesOnly) {
+  state.practiceMistakesOnly = mistakesOnly;
+  if (mistakesOnly) {
+    state.words = appData.mistakes.map(m => ({ en: m.en, zh: m.zh }));
+  } else {
+    const bank = WORD_BANKS[state.level];
+    state.words = shuffle([...bank.words]).slice(0, 10);
+  }
+  state.currentIndex = 0;
+  state.score = 0;
+  state.mistakes = [];
+  showView('quiz');
+  renderQuestion();
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ===== 渲染题目 =====
+function renderQuestion() {
+  const word = state.words[state.currentIndex];
+  state.answered = false;
+  const total = state.words.length;
+  const idx = state.currentIndex + 1;
+
+  document.getElementById('progressText').textContent = `${idx} / ${total}`;
+  document.getElementById('progressFill').style.width = `${(idx / total) * 100}%`;
+  document.getElementById('scoreText').textContent = `${state.score} 分`;
+
+  const display = document.getElementById('quizDisplay');
+  const inputArea = document.getElementById('quizInputArea');
+  const optionsArea = document.getElementById('quizOptions');
+  const feedback = document.getElementById('quizFeedback');
+  const nextBtn = document.getElementById('nextBtn');
+
+  feedback.className = 'feedback';
+  feedback.innerHTML = '';
+  nextBtn.style.display = 'none';
+
+  if (state.mode === 'spelling') {
+    // 看中文写英文
+    display.innerHTML = `<div class="word-meaning">${word.zh}</div><div class="word-hint">请拼写对应的英文单词</div>`;
+    inputArea.innerHTML = `<input type="text" class="word-input" id="wordInput" placeholder="输入英文单词" autocomplete="off">`;
+    optionsArea.innerHTML = '';
+    const input = document.getElementById('wordInput');
+    input.focus();
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') checkAnswer(); });
+  } else if (state.mode === 'dictation') {
+    // 听写模式
+    display.innerHTML = `<div class="word-hint">听发音，写出你听到的单词</div>
+      <button class="speaker-btn" onclick="speakWord()">🔊</button>`;
+    inputArea.innerHTML = `<input type="text" class="word-input" id="wordInput" placeholder="输入听到的单词" autocomplete="off">`;
+    optionsArea.innerHTML = '';
+    const input = document.getElementById('wordInput');
+    input.focus();
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') checkAnswer(); });
+    // 自动播放发音
+    setTimeout(() => speakWord(), 300);
+  } else if (state.mode === '默写') {
+    // 看英文选中文
+    display.innerHTML = `<div class="word-en">${word.en}</div><div class="word-hint">选择正确的中文释义</div>`;
+    inputArea.innerHTML = '';
+    optionsArea.innerHTML = '';
+    const options = generateOptions(word, 'zh');
+    options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.textContent = opt;
+      btn.onclick = () => checkChoice(btn, opt, word.zh);
+      optionsArea.appendChild(btn);
+    });
+  } else if (state.mode === 'choice') {
+    // 选择题：看中文选英文
+    display.innerHTML = `<div class="word-meaning">${word.zh}</div><div class="word-hint">选择正确的英文单词</div>`;
+    inputArea.innerHTML = '';
+    optionsArea.innerHTML = '';
+    const options = generateOptions(word, 'en');
+    options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.textContent = opt;
+      btn.onclick = () => checkChoice(btn, opt, word.en);
+      optionsArea.appendChild(btn);
+    });
+  }
+}
+
+function generateOptions(correctWord, field) {
+  const options = [correctWord[field]];
+  const bankWords = WORD_BANKS[state.level].words;
+  const others = shuffle(bankWords.filter(w => w[field] !== correctWord[field])).slice(0, 3);
+  others.forEach(w => options.push(w[field]));
+  return shuffle(options);
+}
+
+function speakWord() {
+  const word = state.words[state.currentIndex];
+  if ('speechSynthesis' in window) {
+    const utter = new SpeechSynthesisUtterance(word.en);
+    utter.lang = 'en-US';
+    utter.rate = 0.8;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utter);
+  } else {
+    showToast('当前浏览器不支持语音播放');
+  }
+}
+
+// ===== 检查答案 =====
+function checkAnswer() {
+  if (state.answered) return;
+  const word = state.words[state.currentIndex];
+  const input = document.getElementById('wordInput');
+  const userVal = input.value.trim().toLowerCase();
+  const correctVal = word.en.toLowerCase();
+
+  state.answered = true;
+  const feedback = document.getElementById('quizFeedback');
+  const nextBtn = document.getElementById('nextBtn');
+
+  if (userVal === correctVal) {
+    input.classList.add('correct');
+    state.score++;
+    feedback.className = 'feedback show correct';
+    feedback.innerHTML = `✓ 回答正确！<span class="answer">${word.en}</span> — ${word.zh}`;
+    updateStats(true);
+  } else {
+    input.classList.add('wrong');
+    feedback.className = 'feedback show wrong';
+    feedback.innerHTML = `✗ 正确答案：<span class="answer">${word.en}</span> — ${word.zh}`;
+    addToMistakes(word);
+    updateStats(false);
+  }
+
+  document.getElementById('scoreText').textContent = `${state.score} 分`;
+  nextBtn.style.display = 'block';
+  nextBtn.textContent = state.currentIndex >= state.words.length - 1 ? '查看结果' : '下一题';
+}
+
+function checkChoice(btn, userVal, correctVal) {
+  if (state.answered) return;
+  const word = state.words[state.currentIndex];
+  state.answered = true;
+  const feedback = document.getElementById('quizFeedback');
+  const nextBtn = document.getElementById('nextBtn');
+
+  document.querySelectorAll('.option-btn').forEach(b => {
+    b.disabled = true;
+    if (b.textContent === correctVal) b.classList.add('correct');
+  });
+
+  if (userVal === correctVal) {
+    state.score++;
+    feedback.className = 'feedback show correct';
+    feedback.innerHTML = `✓ 回答正确！<span class="answer">${word.en}</span> — ${word.zh}`;
+    updateStats(true);
+  } else {
+    btn.classList.add('wrong');
+    feedback.className = 'feedback show wrong';
+    feedback.innerHTML = `✗ 正确答案：<span class="answer">${word.en}</span> — ${word.zh}`;
+    addToMistakes(word);
+    updateStats(false);
+  }
+
+  document.getElementById('scoreText').textContent = `${state.score} 分`;
+  nextBtn.style.display = 'block';
+  nextBtn.textContent = state.currentIndex >= state.words.length - 1 ? '查看结果' : '下一题';
+}
+
+// ===== 下一题 =====
+document.getElementById('nextBtn').onclick = () => {
+  if (state.currentIndex >= state.words.length - 1) {
+    showResult();
+  } else {
+    state.currentIndex++;
+    renderQuestion();
+  }
+};
+
+function restartQuiz() {
+  startQuiz(state.practiceMistakesOnly);
+}
+
+// ===== 统计更新 =====
+function updateStats(isCorrect) {
+  appData.stats.total++;
+  if (isCorrect) appData.stats.correct++;
+  const level = state.practiceMistakesOnly ? 'mistakes' : state.level;
+  if (!appData.stats.byLevel[level]) appData.stats.byLevel[level] = { total: 0, correct: 0 };
+  appData.stats.byLevel[level].total++;
+  if (isCorrect) appData.stats.byLevel[level].correct++;
+  saveData(appData);
+}
+
+function addToMistakes(word) {
+  if (!appData.mistakes.find(m => m.en === word.en)) {
+    appData.mistakes.push({ en: word.en, zh: word.zh });
+    saveData(appData);
+  }
+}
+
+// ===== 结果页 =====
+function showResult() {
+  const total = state.words.length;
+  const score = state.score;
+  const pct = Math.round((score / total) * 100);
+  document.getElementById('resultScore').textContent = `${score} / ${total}`;
+  document.getElementById('resultDetail').textContent = `正确率 ${pct}%${state.mistakes.length ? '' : '，太棒了，全对！'}`;
+  showView('result');
+}
+
+// ===== 错词本 =====
+function renderMistakes() {
+  const list = document.getElementById('mistakeList');
+  document.getElementById('mistakeCount').textContent = `${appData.mistakes.length} 个错词`;
+  if (appData.mistakes.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:var(--text-secondary);padding:40px 0;font-size:14px">暂无错词，继续保持！</div>';
+    return;
+  }
+  list.innerHTML = '';
+  appData.mistakes.forEach((m, i) => {
+    const item = document.createElement('div');
+    item.className = 'word-item';
+    item.innerHTML = `<div><div class="en">${m.en}</div><div class="zh">${m.zh}</div></div>
+      <button class="del-btn" data-idx="${i}">✕</button>`;
+    list.appendChild(item);
+  });
+  list.querySelectorAll('.del-btn').forEach(btn => {
+    btn.onclick = (e) => {
+      const idx = parseInt(e.target.dataset.idx);
+      appData.mistakes.splice(idx, 1);
+      saveData(appData);
+      renderMistakes();
+    };
+  });
+}
+
+document.getElementById('practiceMistakesBtn').onclick = () => {
+  if (appData.mistakes.length === 0) {
+    showToast('错词本是空的');
+    return;
+  }
+  startQuiz(true);
+};
+
+// ===== 统计页 =====
+function renderStats() {
+  document.getElementById('statTotal').textContent = appData.stats.total;
+  document.getElementById('statCorrect').textContent = appData.stats.correct;
+  const rate = appData.stats.total > 0 ? Math.round((appData.stats.correct / appData.stats.total) * 100) : 0;
+  document.getElementById('statRate').textContent = rate + '%';
+
+  const levelStats = document.getElementById('levelStats');
+  levelStats.innerHTML = '';
+  for (const [key, bank] of Object.entries(WORD_BANKS)) {
+    const s = appData.stats.byLevel[key];
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)';
+    if (s) {
+      const r = Math.round((s.correct / s.total) * 100);
+      row.innerHTML = `<span style="font-weight:500">${bank.name}</span><span style="font-size:13px;color:var(--text-secondary)">${s.correct}/${s.total} (${r}%)</span>`;
+    } else {
+      row.innerHTML = `<span style="font-weight:500">${bank.name}</span><span style="font-size:13px;color:var(--text-secondary)">未开始</span>`;
+    }
+    levelStats.appendChild(row);
+  }
+}
+
+// ===== Toast =====
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+// 启动
+init();
+</script>
+</body>
+</html>
