@@ -11971,8 +11971,21 @@ function goHome() {
 
 // ===== 开始练习 =====
 document.getElementById('startBtn').onclick = () => {
+  // 解锁语音合成：浏览器自动播放策略需要用户先有交互
+  unlockAudio();
   startQuiz(false);
 };
+
+function unlockAudio() {
+  if ('speechSynthesis' in window) {
+    // 先播放一个空的语音，解锁音频系统
+    const utter = new SpeechSynthesisUtterance('');
+    utter.volume = 0;
+    speechSynthesis.speak(utter);
+    // 预加载 voices
+    speechSynthesis.getVoices();
+  }
+}
 
 function startQuiz(mistakesOnly) {
   state.practiceMistakesOnly = mistakesOnly;
@@ -12088,8 +12101,14 @@ function speakWord() {
     utter.lang = 'en-US';
     utter.rate = 0.85;
     utter.pitch = 1;
+    utter.volume = 1;
     // 选择美音 voice
-    const voices = speechSynthesis.getVoices();
+    let voices = speechSynthesis.getVoices();
+    if (voices.length === 0) {
+      // voices 还没加载，等待一下
+      setTimeout(() => speakWord(), 100);
+      return;
+    }
     const usVoice = voices.find(v => v.lang === 'en-US' && v.localService) || 
                     voices.find(v => v.lang === 'en-US') ||
                     voices.find(v => v.lang.startsWith('en'));
@@ -12267,6 +12286,14 @@ function showToast(msg) {
   toast.textContent = msg;
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+// 预加载语音合成 voices
+if ('speechSynthesis' in window) {
+  speechSynthesis.getVoices();
+  speechSynthesis.onvoiceschanged = () => {
+    speechSynthesis.getVoices();
+  };
 }
 
 // 启动
